@@ -3,7 +3,8 @@
 from functools import partial
 import os.path
 from python_qt_binding.QtCore import QPoint, QSize, Qt
-from python_qt_binding.QtGui import QImage, QLabel, QLineEdit, QPainter, QPolygon, QPushButton, QColor
+from python_qt_binding.QtGui import QImage, QPainter, QPolygon, QColor
+from python_qt_binding.QtWidgets import QLabel, QLineEdit, QPushButton
 import rospy
 import yaml
 

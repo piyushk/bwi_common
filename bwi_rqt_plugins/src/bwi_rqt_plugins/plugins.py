@@ -41,15 +41,16 @@ from bwi_msgs.srv import QuestionDialog, QuestionDialogResponse, \
                          QuestionDialogRequest
 from functools import partial
 from qt_gui.plugin import Plugin
-from python_qt_binding.QtGui import QFont, QGridLayout, QLabel, QLineEdit, \
-                                    QPushButton, QTextBrowser, QVBoxLayout, QWidget
+from python_qt_binding.QtGui import QFont
+from python_qt_binding.QtWidgets import QLabel, QLineEdit, \
+                                        QPushButton, QTextBrowser, QVBoxLayout, QWidget
 
 import os
 import rospkg
 
 from geometry_msgs.msg import Twist
 from python_qt_binding import loadUi
-from python_qt_binding.QtCore import Qt, QTimer, SIGNAL, Slot
+from python_qt_binding.QtCore import Qt, QTimer, Signal, Slot
 
 class QuestionDialogPlugin(Plugin):
 
@@ -86,8 +87,8 @@ class QuestionDialogPlugin(Plugin):
         self.text_label = None
         self.text_input = None
 
-        self.connect(self._widget, SIGNAL("update"), self.update)
-        self.connect(self._widget, SIGNAL("timeout"), self.timeout)
+        self.connect(self._widget, Signal("update"), self.update)
+        self.connect(self._widget, Signal("timeout"), self.timeout)
 
     def shutdown_plugin(self):
         self.service.shutdown()
@@ -95,7 +96,7 @@ class QuestionDialogPlugin(Plugin):
     def service_callback(self, req):
         self.response_ready = False
         self.request = req
-        self._widget.emit(SIGNAL("update"))
+        self._widget.emit(Signal("update"))
         # Start timer against wall clock here instead of the ros clock.
         start_time = time.time()
         while not self.response_ready:
@@ -105,7 +106,7 @@ class QuestionDialogPlugin(Plugin):
             if req.timeout != QuestionDialogRequest.NO_TIMEOUT:
                 current_time = time.time()
                 if current_time - start_time > req.timeout:
-                    self._widget.emit(SIGNAL("timeout"))
+                    self._widget.emit(Signal("timeout"))
                     return QuestionDialogResponse(
                             QuestionDialogRequest.TIMED_OUT, "")
             time.sleep(0.2)

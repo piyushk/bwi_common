@@ -4,7 +4,8 @@ from functools import partial
 import math
 import os.path
 from python_qt_binding.QtCore import QPoint, QPointF, QRect, Qt
-from python_qt_binding.QtGui import QLabel, QLineEdit, QPainter, QPolygon, QPushButton
+from python_qt_binding.QtGui import QPainter, QPolygon
+from python_qt_binding.QtWidgets import QLabel, QLineEdit, QPushButton
 import rospy
 import yaml
 

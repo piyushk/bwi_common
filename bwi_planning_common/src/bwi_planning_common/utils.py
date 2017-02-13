@@ -1,7 +1,8 @@
 #!/bin/env python
 
 from python_qt_binding.QtCore import QPoint, QPointF, QSize
-from python_qt_binding.QtGui import QLabel, QPolygon
+from python_qt_binding.QtGui import QPolygon
+from python_qt_binding.QtWidgets import QLabel
 
 def clearLayoutAndFixHeight(layout):
     # Clear all subfunction buttons.
