@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>257</width>
-    <height>190</height>
+    <width>287</width>
+    <height>203</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -30,31 +30,63 @@
    </item>
    <item>
     <layout class="QGridLayout" name="button_layout">
+     <item row="0" column="0">
+      <widget class="QPushButton" name="q_button">
+       <property name="text">
+        <string>⟲ (q)</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
      <item row="0" column="1">
       <widget class="QPushButton" name="w_button">
        <property name="text">
-        <string>w</string>
+        <string>↑ (w)</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QPushButton" name="e_button">
+       <property name="text">
+        <string>⟳ (e)</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
      <item row="1" column="0">
       <widget class="QPushButton" name="a_button">
        <property name="text">
-        <string>a</string>
+        <string>← (a)</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
      <item row="1" column="1">
       <widget class="QPushButton" name="s_button">
        <property name="text">
-        <string>s</string>
+        <string>↓ (s)</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
      <item row="1" column="2">
       <widget class="QPushButton" name="d_button">
        <property name="text">
-        <string>d</string>
+        <string>→ (d)</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -63,16 +95,16 @@
    <item>
     <layout class="QVBoxLayout" name="info_layout">
      <item>
-      <layout class="QHBoxLayout" name="linear_speed_info_layout">
+      <layout class="QHBoxLayout" name="linear_x_vel_info_layout">
        <item>
-        <widget class="QLabel" name="linear_speed_info_label">
+        <widget class="QLabel" name="linear_x_vel_info_label">
          <property name="text">
-          <string>Current Linear Speed:</string>
+          <string>Current Forward Speed:</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="linear_speed">
+        <widget class="QLabel" name="linear_x_vel">
          <property name="text">
           <string>0.00</string>
          </property>
@@ -101,16 +133,54 @@
       </layout>
      </item>
      <item>
-      <layout class="QHBoxLayout" name="angular_speed_info_layout">
+      <layout class="QHBoxLayout" name="linear_y_vel_info_layout">
        <item>
-        <widget class="QLabel" name="angular_speed_info_label">
+        <widget class="QLabel" name="linear_y_vel_info_label">
+         <property name="text">
+          <string>Current Strafe Speed:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="linear_y_vel">
+         <property name="text">
+          <string>0.00</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="mps_label">
+         <property name="text">
+          <string>m/s</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="angular_vel_info_layout">
+       <item>
+        <widget class="QLabel" name="angular_vel_info_label">
          <property name="text">
           <string>Current Angular Speed:</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="angular_speed">
+        <widget class="QLabel" name="angular_vel">
          <property name="text">
           <string>0.00</string>
          </property>
@@ -137,13 +207,6 @@
         </spacer>
        </item>
       </layout>
-     </item>
-     <item>
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>(Click a button if speed not changing)</string>
-       </property>
-      </widget>
      </item>
     </layout>
    </item>

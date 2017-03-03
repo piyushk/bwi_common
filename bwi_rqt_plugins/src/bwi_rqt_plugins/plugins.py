@@ -42,7 +42,7 @@ from bwi_msgs.srv import QuestionDialog, QuestionDialogResponse, \
 from functools import partial
 from qt_gui.plugin import Plugin
 from python_qt_binding.QtGui import QFont
-from python_qt_binding.QtWidgets import QLabel, QLineEdit, \
+from python_qt_binding.QtWidgets import QDialog, QGridLayout, QLabel, QLineEdit, \
                                         QPushButton, QTextBrowser, QVBoxLayout, QWidget
 
 import os
@@ -50,7 +50,8 @@ import rospkg
 
 from geometry_msgs.msg import Twist
 from python_qt_binding import loadUi
-from python_qt_binding.QtCore import Qt, QTimer, Signal, Slot
+from python_qt_binding.QtCore import QCoreApplication, QEvent, QObject, Qt, QTimer, Signal, Slot
+
 
 class QuestionDialogPlugin(Plugin):
 
@@ -62,21 +63,20 @@ class QuestionDialogPlugin(Plugin):
         font_size = rospy.get_param("~font_size", 40)
 
         # Create QWidget
-        self._widget = QWidget()
-        self._widget.setFont(QFont("Times", font_size, QFont.Bold))
-        self._layout = QVBoxLayout(self._widget)
-        self._text_browser = QTextBrowser(self._widget)
+        self.widget = QWidget()
+        self.widget.setFont(QFont("Times", font_size, QFont.Bold))
+        self._layout = QVBoxLayout(self.widget)
+        self._text_browser = QTextBrowser(self.widget)
         self._layout.addWidget(self._text_browser)
         self._button_layout = QGridLayout()
         self._layout.addLayout(self._button_layout)
 
-        # layout = QVBoxLayout(self._widget)
+        # layout = QVBoxLayout(self.widget)
         # layout.addWidget(self.button)
-        self._widget.setObjectName('QuestionDialogPluginUI')
+        self.widget.setObjectName('QuestionDialogPluginUI')
         if context.serial_number() > 1:
-            self._widget.setWindowTitle(self._widget.windowTitle() +
-                                        (' (%d)' % context.serial_number()))
-        context.add_widget(self._widget)
+            self.widget.setWindowTitle(self.widget.windowTitle() + (' (%d)' % context.serial_number()))
+        context.add_widget(self.widget)
 
         # Setup service provider
         self.service = rospy.Service('question_dialog', QuestionDialog,
@@ -87,8 +87,8 @@ class QuestionDialogPlugin(Plugin):
         self.text_label = None
         self.text_input = None
 
-        self.connect(self._widget, Signal("update"), self.update)
-        self.connect(self._widget, Signal("timeout"), self.timeout)
+        self.connect(self.widget, Signal("update"), self.update)
+        self.connect(self.widget, Signal("timeout"), self.timeout)
 
     def shutdown_plugin(self):
         self.service.shutdown()
@@ -96,7 +96,7 @@ class QuestionDialogPlugin(Plugin):
     def service_callback(self, req):
         self.response_ready = False
         self.request = req
-        self._widget.emit(Signal("update"))
+        self.widget.emit(Signal("update"))
         # Start timer against wall clock here instead of the ros clock.
         start_time = time.time()
         while not self.response_ready:
@@ -106,7 +106,7 @@ class QuestionDialogPlugin(Plugin):
             if req.timeout != QuestionDialogRequest.NO_TIMEOUT:
                 current_time = time.time()
                 if current_time - start_time > req.timeout:
-                    self._widget.emit(Signal("timeout"))
+                    self.widget.emit(Signal("timeout"))
                     return QuestionDialogResponse(
                             QuestionDialogRequest.TIMED_OUT, "")
             time.sleep(0.2)
@@ -123,16 +123,16 @@ class QuestionDialogPlugin(Plugin):
             self.response_ready = True
         elif req.type == QuestionDialogRequest.CHOICE_QUESTION:
             for index, options in enumerate(req.options):
-                button = QPushButton(options, self._widget)
+                button = QPushButton(options, self.widget)
                 button.clicked.connect(partial(self.handle_button, index))
                 row = index / 3
                 col = index % 3
                 self._button_layout.addWidget(button, row, col)
                 self.buttons.append(button)
         elif req.type == QuestionDialogRequest.TEXT_QUESTION:
-            self.text_label = QLabel("Enter here: ", self._widget)
+            self.text_label = QLabel("Enter here: ", self.widget)
             self._button_layout.addWidget(self.text_label, 0, 0)
-            self.text_input = QLineEdit(self._widget)
+            self.text_input = QLineEdit(self.widget)
             self.text_input.editingFinished.connect(self.handle_text)
             self._button_layout.addWidget(self.text_input, 0, 1)
 
@@ -170,123 +170,211 @@ class QuestionDialogPlugin(Plugin):
         # v = instance_settings.value(k)
         pass
 
-    #def trigger_configuration(self):
+    # def trigger_configuration(self):
         # Comment in to signal that the plugin has a way to configure
         # This will enable a setting button (gear icon) in each dock widget title bar
         # Usually used to open a modal configuration dialog
 
+
+class KeyEventFilter(QObject):
+
+    def __init__(self, context):
+        super(KeyEventFilter, self).__init__(context)
+        self.parent = context
+
+    def eventFilter(self, receiver, event):
+        if event.type() == QEvent.KeyPress and not event.isAutoRepeat():
+            if event.key() == Qt.Key_W:
+                self.parent.widget.w_button.setChecked(True)
+                return True
+            elif event.key() == Qt.Key_S:
+                self.parent.widget.s_button.setChecked(True)
+                return True
+            elif event.key() == Qt.Key_A:
+                self.parent.widget.a_button.setChecked(True)
+                return True
+            elif event.key() == Qt.Key_D:
+                self.parent.widget.d_button.setChecked(True)
+                return True
+            elif event.key() == Qt.Key_Q:
+                self.parent.widget.q_button.setChecked(True)
+                return True
+            elif event.key() == Qt.Key_E:
+                self.parent.widget.e_button.setChecked(True)
+                return True
+
+        if event.type() == QEvent.KeyRelease and not event.isAutoRepeat():
+            if event.key() == Qt.Key_W:
+                self.parent.widget.w_button.setChecked(False)
+                return True
+            elif event.key() == Qt.Key_S:
+                self.parent.widget.s_button.setChecked(False)
+                return True
+            elif event.key() == Qt.Key_A:
+                self.parent.widget.a_button.setChecked(False)
+                return True
+            elif event.key() == Qt.Key_D:
+                self.parent.widget.d_button.setChecked(False)
+                return True
+            elif event.key() == Qt.Key_Q:
+                self.parent.widget.q_button.setChecked(False)
+                return True
+            elif event.key() == Qt.Key_E:
+                self.parent.widget.e_button.setChecked(False)
+                return True
+
+        return super(KeyEventFilter, self).eventFilter(receiver, event)
+
+
+class OptionsDialog(QDialog):
+
+    def __init__(self, parent):
+        super(OptionsDialog, self).__init__(parent)
+        self.setWindowTitle('Options')
+
+        self.widget = QWidget()
+        rp = rospkg.RosPack()
+        ui_file = os.path.join(rp.get_path('bwi_rqt_plugins'), 'resource', 'SimpleRobotSteeringOptions.ui')
+        loadUi(ui_file, self.widget)
+
+
 class SimpleRobotSteeringPlugin(Plugin):
 
-    DEFAULT_LINEAR_VELOCITY = 1.0
+    DEFAULT_LINEAR_X_VELOCITY = 1.0
+    DEFAULT_LINEAR_Y_VELOCITY = 0.5
     DEFAULT_ANGULAR_VELOCITY = math.pi / 2
 
     def __init__(self, context):
         super(SimpleRobotSteeringPlugin, self).__init__(context)
         self.setObjectName('SimpleRobotSteeringPlugin')
 
-        self._publisher = None
+        self.publisher = None
 
-        self._widget = QWidget()
+        self.widget = QWidget()
         rp = rospkg.RosPack()
         ui_file = os.path.join(rp.get_path('bwi_rqt_plugins'), 'resource', 'SimpleRobotSteering.ui')
-        loadUi(ui_file, self._widget)
-        self._widget.setObjectName('SimpleRobotSteeringUi')
+        loadUi(ui_file, self.widget)
+        self.widget.setObjectName('SimpleRobotSteeringUI')
         if context.serial_number() > 1:
-            self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
+            self.widget.setWindowTitle(self.widget.windowTitle() + (' (%d)' % context.serial_number()))
 
-        self._widget.keyPressEvent = self.keyPressEvent
-        self._widget.keyReleaseEvent = self.keyReleaseEvent
-        context.add_widget(self._widget)
+        # from IPython import embed
+        # embed()
 
-        self._widget.topic_line_edit.textChanged.connect(self._on_topic_changed)
+        self.key_event_filter = KeyEventFilter(self)
+        QCoreApplication.instance().installEventFilter(self.key_event_filter)
+        # self.widget.keyReleaseEvent = self.keyReleaseEvent
+        context.add_widget(self.widget)
 
-        self.linear_vel = 0
+        self.widget.topic_line_edit.textChanged.connect(self.on_topic_changed)
+
+        self.target_linear_x_vel = SimpleRobotSteeringPlugin.DEFAULT_LINEAR_X_VELOCITY
+        self.target_linear_y_vel = SimpleRobotSteeringPlugin.DEFAULT_LINEAR_Y_VELOCITY
+        self.target_angular_vel = SimpleRobotSteeringPlugin.DEFAULT_ANGULAR_VELOCITY
+
+        self.linear_x_vel = 0
+        self.linear_y_vel = 0
         self.angular_vel = 0
 
         # After doing so, key press events seem to work ok.
-        self._widget.w_button.setFocus()
+        # self.widget.w_button.setFocus()
 
         # timer to consecutively send twist messages
-        self._update_parameter_timer = QTimer(self)
-        self._update_parameter_timer.timeout.connect(self._on_parameter_changed)
-        self._update_parameter_timer.start(100)
+        self.update_parameter_timer = QTimer(self)
+        self.update_parameter_timer.timeout.connect(self.on_parameter_changed)
+        self.update_parameter_timer.start(100)
+
+        self.widget.w_button.toggled.connect(self.toggle_w_button)
+        self.widget.s_button.toggled.connect(self.toggle_s_button)
+        self.widget.a_button.toggled.connect(self.toggle_a_button)
+        self.widget.d_button.toggled.connect(self.toggle_d_button)
+        self.widget.q_button.toggled.connect(self.toggle_q_button)
+        self.widget.e_button.toggled.connect(self.toggle_e_button)
 
     @Slot(str)
-    def _on_topic_changed(self, topic):
+    def on_topic_changed(self, topic):
         topic = str(topic)
-        self._unregister_publisher()
+        self.unregister_publisher()
         try:
-            self._publisher = rospy.Publisher(topic, Twist, queue_size=10)
+            self.publisher = rospy.Publisher(topic, Twist, queue_size=10)
         except TypeError:
-            self._publisher = rospy.Publisher(topic, Twist)
+            self.publisher = rospy.Publisher(topic, Twist)
 
-    def keyPressEvent(self, event):
-        if not event.isAutoRepeat():
-            if event.key() == Qt.Key_W:
-                self.linear_vel = SimpleRobotSteeringPlugin.DEFAULT_LINEAR_VELOCITY
-                self._widget.w_button.setDown(True)
-                self._widget.s_button.setDown(False)
-            elif event.key() == Qt.Key_S:
-                self.linear_vel = -SimpleRobotSteeringPlugin.DEFAULT_LINEAR_VELOCITY
-                self._widget.s_button.setDown(True)
-                self._widget.w_button.setDown(False)
-            elif event.key() == Qt.Key_A:
-                self.angular_vel = SimpleRobotSteeringPlugin.DEFAULT_ANGULAR_VELOCITY
-                self._widget.a_button.setDown(True)
-                self._widget.d_button.setDown(False)
-            elif event.key() == Qt.Key_D:
-                self.angular_vel = -SimpleRobotSteeringPlugin.DEFAULT_ANGULAR_VELOCITY
-                self._widget.d_button.setDown(True)
-                self._widget.a_button.setDown(False)
+    def toggle_w_button(self, bool):
+        if bool:
+            self.linear_x_vel = self.target_linear_x_vel
+            self.widget.s_button.setChecked(False)
+        else:
+            self.linear_x_vel = 0 if self.linear_x_vel > 0 else self.linear_x_vel
 
-    def keyReleaseEvent(self, event):
-        if not event.isAutoRepeat():
-            if self.linear_vel > 0 and event.key() == Qt.Key_W:
-                self.linear_vel = 0
-                self._widget.w_button.setDown(False)
-            elif self.linear_vel < 0 and event.key() == Qt.Key_S:
-                self.linear_vel = 0
-                self._widget.s_button.setDown(False)
-            elif self.angular_vel > 0 and event.key() == Qt.Key_A:
-                self.angular_vel = 0
-                self._widget.a_button.setDown(False)
-            elif self.angular_vel < 0 and event.key() == Qt.Key_D:
-                self.angular_vel = 0
-                self._widget.d_button.setDown(False)
+    def toggle_s_button(self, bool):
+        if bool:
+            self.linear_x_vel = -self.target_linear_x_vel
+            self.widget.w_button.setChecked(False)
+        else:
+            self.linear_x_vel = 0 if self.linear_x_vel < 0 else self.linear_x_vel
 
+    def toggle_a_button(self, bool):
+        if bool:
+            self.linear_y_vel = self.target_linear_y_vel
+            self.widget.d_button.setChecked(False)
+        else:
+            self.linear_y_vel = 0 if self.linear_y_vel > 0 else self.linear_y_vel
 
-    def _on_parameter_changed(self):
-        self._widget.linear_speed.setText("%.2f"%self.linear_vel)
-        self._widget.angular_speed.setText("%.2f"%self.angular_vel)
-        self._send_twist(self.linear_vel, self.angular_vel)
+    def toggle_d_button(self, bool):
+        if bool:
+            self.linear_y_vel = -self.target_linear_y_vel
+            self.widget.a_button.setChecked(False)
+        else:
+            self.linear_y_vel = 0 if self.linear_y_vel < 0 else self.linear_y_vel
 
-    def _send_twist(self, x_linear, z_angular):
-        if self._publisher is None:
+    def toggle_q_button(self, bool):
+        if bool:
+            self.angular_vel = self.target_angular_vel
+            self.widget.e_button.setChecked(False)
+        else:
+            self.angular_vel = 0 if self.angular_vel > 0 else self.angular_vel
+
+    def toggle_e_button(self, bool):
+        if bool:
+            self.angular_vel = -self.target_angular_vel
+            self.widget.q_button.setChecked(False)
+        else:
+            self.angular_vel = 0 if self.angular_vel < 0 else self.angular_vel
+
+    def on_parameter_changed(self):
+        self.widget.linear_x_vel.setText("%.2f" % self.linear_x_vel)
+        self.widget.linear_y_vel.setText("%.2f" % self.linear_y_vel)
+        self.widget.angular_vel.setText("%.2f" % self.angular_vel)
+        self.send_twist(self.linear_x_vel, self.linear_y_vel, self.angular_vel)
+
+    def send_twist(self, x_linear, y_linear, z_angular):
+        if self.publisher is None:
             return
         twist = Twist()
         twist.linear.x = x_linear
-        twist.linear.y = 0
+        twist.linear.y = y_linear
         twist.linear.z = 0
         twist.angular.x = 0
         twist.angular.y = 0
         twist.angular.z = z_angular
 
-        self._publisher.publish(twist)
+        self.publisher.publish(twist)
 
-    def _unregister_publisher(self):
-        if self._publisher is not None:
-            self._publisher.unregister()
-            self._publisher = None
+    def unregister_publisher(self):
+        if self.publisher is not None:
+            self.publisher.unregister()
+            self.publisher = None
 
     def shutdown_plugin(self):
-        self._update_parameter_timer.stop()
-        self._unregister_publisher()
+        self.update_parameter_timer.stop()
+        self.unregister_publisher()
 
     def save_settings(self, plugin_settings, instance_settings):
-        instance_settings.set_value('topic' , self._widget.topic_line_edit.text())
+        instance_settings.set_value('topic', self.widget.topic_line_edit.text())
 
     def restore_settings(self, plugin_settings, instance_settings):
 
         value = instance_settings.value('topic', "/cmd_vel")
         value = rospy.get_param("~default_topic", value)
-        self._widget.topic_line_edit.setText(value)
+        self.widget.topic_line_edit.setText(value)
