@@ -1,5 +1,5 @@
-# SimpleRobotSteeringPlugin plugin based on rqt_robot_steering. Original
-# copyright notice below.
+# SimpleRobotSteeringPlugin plugin based on rqt_robot_steering.
+# Original copyright notice below.
 #
 # Copyright (c) 2011, Dirk Thomas, TU Darmstadt
 # All rights reserved.
@@ -226,16 +226,15 @@ class KeyEventFilter(QObject):
         return super(KeyEventFilter, self).eventFilter(receiver, event)
 
 
-class OptionsDialog(QDialog):
+class SettingsDialog(QDialog):
 
-    def __init__(self, parent):
-        super(OptionsDialog, self).__init__(parent)
+    def __init__(self):
+        super(SettingsDialog, self).__init__()
         self.setWindowTitle('Options')
 
-        self.widget = QWidget()
         rp = rospkg.RosPack()
-        ui_file = os.path.join(rp.get_path('bwi_rqt_plugins'), 'resource', 'SimpleRobotSteeringOptions.ui')
-        loadUi(ui_file, self.widget)
+        ui_file = os.path.join(rp.get_path('bwi_rqt_plugins'), 'resources', 'SimpleRobotSteeringSettings.ui')
+        loadUi(ui_file, self)
 
 
 class SimpleRobotSteeringPlugin(Plugin):
@@ -252,7 +251,7 @@ class SimpleRobotSteeringPlugin(Plugin):
 
         self.widget = QWidget()
         rp = rospkg.RosPack()
-        ui_file = os.path.join(rp.get_path('bwi_rqt_plugins'), 'resource', 'SimpleRobotSteering.ui')
+        ui_file = os.path.join(rp.get_path('bwi_rqt_plugins'), 'resources', 'SimpleRobotSteering.ui')
         loadUi(ui_file, self.widget)
         self.widget.setObjectName('SimpleRobotSteeringUI')
         if context.serial_number() > 1:
@@ -279,7 +278,7 @@ class SimpleRobotSteeringPlugin(Plugin):
         # After doing so, key press events seem to work ok.
         # self.widget.w_button.setFocus()
 
-        # timer to consecutively send twist messages
+        # timer to consecutively send twist messages.
         self.update_parameter_timer = QTimer(self)
         self.update_parameter_timer.timeout.connect(self.on_parameter_changed)
         self.update_parameter_timer.start(100)
@@ -291,14 +290,24 @@ class SimpleRobotSteeringPlugin(Plugin):
         self.widget.q_button.toggled.connect(self.toggle_q_button)
         self.widget.e_button.toggled.connect(self.toggle_e_button)
 
+        # Setup dialog to change settings.
+        self.dialog = SettingsDialog()
+        self.dialog.accepted.connect(self.update_target_vel)
+        self.widget.settings_button.clicked.connect(self.exec_dialog)
+
     @Slot(str)
     def on_topic_changed(self, topic):
         topic = str(topic)
         self.unregister_publisher()
         try:
-            self.publisher = rospy.Publisher(topic, Twist, queue_size=10)
+            self.publisher = rospy.Publisher(topic, Twist, queue_size=1)
         except TypeError:
             self.publisher = rospy.Publisher(topic, Twist)
+
+    def unregister_publisher(self):
+        if self.publisher is not None:
+            self.publisher.unregister()
+            self.publisher = None
 
     def toggle_w_button(self, bool):
         if bool:
@@ -361,10 +370,16 @@ class SimpleRobotSteeringPlugin(Plugin):
 
         self.publisher.publish(twist)
 
-    def unregister_publisher(self):
-        if self.publisher is not None:
-            self.publisher.unregister()
-            self.publisher = None
+    def exec_dialog(self):
+        self.dialog.target_linear_x_vel.setValue(self.target_linear_x_vel)
+        self.dialog.target_linear_y_vel.setValue(self.target_linear_y_vel)
+        self.dialog.target_angular_vel.setValue(self.target_angular_vel)
+        self.dialog.exec_()
+
+    def update_target_vel(self):
+        self.target_linear_x_vel = self.dialog.target_linear_x_vel.value()
+        self.target_linear_y_vel = self.dialog.target_linear_y_vel.value()
+        self.target_angular_vel = self.dialog.target_angular_vel.value()
 
     def shutdown_plugin(self):
         self.update_parameter_timer.stop()
@@ -372,9 +387,26 @@ class SimpleRobotSteeringPlugin(Plugin):
 
     def save_settings(self, plugin_settings, instance_settings):
         instance_settings.set_value('topic', self.widget.topic_line_edit.text())
+        instance_settings.set_value('target_linear_x_vel', self.target_linear_x_vel)
+        instance_settings.set_value('target_linear_y_vel', self.target_linear_y_vel)
+        instance_settings.set_value('target_angular_vel', self.target_angular_vel)
 
     def restore_settings(self, plugin_settings, instance_settings):
+        topic = instance_settings.value('topic', "/cmd_vel")
+        topic = rospy.get_param("~default_topic", topic)
+        self.widget.topic_line_edit.setText(topic)
 
-        value = instance_settings.value('topic', "/cmd_vel")
-        value = rospy.get_param("~default_topic", value)
-        self.widget.topic_line_edit.setText(value)
+        self.target_linear_x_vel = instance_settings.value('target_linear_x_vel',
+                                                           SimpleRobotSteeringPlugin.DEFAULT_LINEAR_X_VELOCITY)
+        self.target_linear_x_vel = float(self.target_linear_x_vel)
+        self.target_linear_x_vel = rospy.get_param("~default_target_x_vel", self.target_linear_x_vel)
+
+        self.target_linear_y_vel = instance_settings.value('target_linear_y_vel',
+                                                           SimpleRobotSteeringPlugin.DEFAULT_LINEAR_Y_VELOCITY)
+        self.target_linear_y_vel = rospy.get_param("~default_target_y_vel", self.target_linear_y_vel)
+        self.target_linear_y_vel = float(self.target_linear_y_vel)
+
+        self.target_angular_vel = instance_settings.value('target_angular_vel',
+                                                          SimpleRobotSteeringPlugin.DEFAULT_ANGULAR_VELOCITY)
+        self.target_angular_vel = rospy.get_param("~default_target_x_vel", self.target_angular_vel)
+        self.target_angular_vel = float(self.target_angular_vel)

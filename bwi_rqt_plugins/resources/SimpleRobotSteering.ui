@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>287</width>
-    <height>203</height>
+    <height>204</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -99,7 +99,7 @@
        <item>
         <widget class="QLabel" name="linear_x_vel_info_label">
          <property name="text">
-          <string>Current Forward Speed:</string>
+          <string>Forward Speed:</string>
          </property>
         </widget>
        </item>
@@ -137,7 +137,7 @@
        <item>
         <widget class="QLabel" name="linear_y_vel_info_label">
          <property name="text">
-          <string>Current Strafe Speed:</string>
+          <string>Strafe Speed:</string>
          </property>
         </widget>
        </item>
@@ -175,7 +175,7 @@
        <item>
         <widget class="QLabel" name="angular_vel_info_label">
          <property name="text">
-          <string>Current Angular Speed:</string>
+          <string>Angular Speed:</string>
          </property>
         </widget>
        </item>
@@ -205,6 +205,13 @@
           </size>
          </property>
         </spacer>
+       </item>
+       <item>
+        <widget class="QToolButton" name="settings_button">
+         <property name="text">
+          <string>⚙</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>
