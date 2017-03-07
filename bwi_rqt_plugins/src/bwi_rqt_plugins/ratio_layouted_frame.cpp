@@ -36,7 +36,7 @@
 
 namespace bwi_rqt_plugins {
 
-RatioLayoutedFrame::RatioLayoutedFrame(QWidget* parent, Qt::WFlags flags)
+RatioLayoutedFrame::RatioLayoutedFrame(QWidget* parent, Qt::WindowFlags flags)
   : QFrame()
   , aspect_ratio_(4, 3)
 {
