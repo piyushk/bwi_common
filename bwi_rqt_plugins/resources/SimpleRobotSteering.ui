@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>287</width>
-    <height>204</height>
+    <width>319</width>
+    <height>210</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -168,6 +168,16 @@
          </property>
         </spacer>
        </item>
+       <item>
+        <widget class="QPushButton" name="disable_keyboard_button">
+         <property name="text">
+          <string>Disable Keyboard</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
       </layout>
      </item>
      <item>
@@ -207,9 +217,12 @@
         </spacer>
        </item>
        <item>
-        <widget class="QToolButton" name="settings_button">
+        <widget class="QPushButton" name="settings_button">
          <property name="text">
-          <string>⚙</string>
+          <string>Change Speed</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
          </property>
         </widget>
        </item>

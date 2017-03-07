@@ -33,24 +33,22 @@
 
 from __future__ import division
 
+from functools import partial
 import math
+import os
+import rospkg
 import rospy
 import time
 
-from bwi_msgs.srv import QuestionDialog, QuestionDialogResponse, \
-                         QuestionDialogRequest
-from functools import partial
-from qt_gui.plugin import Plugin
-from python_qt_binding.QtGui import QFont
-from python_qt_binding.QtWidgets import QDialog, QGridLayout, QLabel, QLineEdit, \
-                                        QPushButton, QTextBrowser, QVBoxLayout, QWidget
-
-import os
-import rospkg
-
-from geometry_msgs.msg import Twist
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import QCoreApplication, QEvent, QObject, Qt, QTimer, Signal, Slot
+from python_qt_binding.QtGui import QFont
+from python_qt_binding.QtWidgets import QDialog, QGridLayout, QLabel, QLineEdit, \
+                                        QPushButton, QTextBrowser, QTextEdit, QVBoxLayout, QWidget
+from qt_gui.plugin import Plugin
+
+from bwi_msgs.srv import QuestionDialog, QuestionDialogResponse, QuestionDialogRequest
+from geometry_msgs.msg import Twist
 
 
 class QuestionDialogPlugin(Plugin):
@@ -183,6 +181,20 @@ class KeyEventFilter(QObject):
         self.parent = context
 
     def eventFilter(self, receiver, event):
+
+        # If the currently focused widget is a QLineEdit or a QTextEdit, don't capture.
+        focusedWidget = QCoreApplication.instance().focusWidget()
+        if (isinstance(focusedWidget, QLineEdit) or isinstance(focusedWidget, QTextEdit)):
+            return super(KeyEventFilter, self).eventFilter(receiver, event)
+
+        # If keyboard is diabled, don't capture.
+        try:
+            if self.parent.widget.disable_keyboard_button.isChecked():
+                return super(KeyEventFilter, self).eventFilter(receiver, event)
+        except RuntimeError:
+            # This error happens when the widget is being destroyed.
+            pass
+
         if event.type() == QEvent.KeyPress and not event.isAutoRepeat():
             if event.key() == Qt.Key_W:
                 self.parent.widget.w_button.setChecked(True)
@@ -257,12 +269,10 @@ class SimpleRobotSteeringPlugin(Plugin):
         if context.serial_number() > 1:
             self.widget.setWindowTitle(self.widget.windowTitle() + (' (%d)' % context.serial_number()))
 
-        # from IPython import embed
-        # embed()
-
+        # Add Key Capture and disable functionality.
+        self.disable_capture = False
         self.key_event_filter = KeyEventFilter(self)
         QCoreApplication.instance().installEventFilter(self.key_event_filter)
-        # self.widget.keyReleaseEvent = self.keyReleaseEvent
         context.add_widget(self.widget)
 
         self.widget.topic_line_edit.textChanged.connect(self.on_topic_changed)
