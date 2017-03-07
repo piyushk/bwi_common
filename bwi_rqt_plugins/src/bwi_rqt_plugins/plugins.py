@@ -303,6 +303,7 @@ class SimpleRobotSteeringPlugin(Plugin):
         # Setup dialog to change settings.
         self.dialog = SettingsDialog()
         self.dialog.accepted.connect(self.update_target_vel)
+        self.dialog.rejected.connect(partial(self.widget.settings_button.setChecked, False))
         self.widget.settings_button.clicked.connect(self.exec_dialog)
 
     @Slot(str)
@@ -390,6 +391,7 @@ class SimpleRobotSteeringPlugin(Plugin):
         self.target_linear_x_vel = self.dialog.target_linear_x_vel.value()
         self.target_linear_y_vel = self.dialog.target_linear_y_vel.value()
         self.target_angular_vel = self.dialog.target_angular_vel.value()
+        self.widget.settings_button.setChecked(False)
 
     def shutdown_plugin(self):
         self.update_parameter_timer.stop()
