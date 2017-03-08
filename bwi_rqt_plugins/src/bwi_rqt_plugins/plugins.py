@@ -281,6 +281,7 @@ class SimpleRobotSteeringPlugin(Plugin):
         self.target_linear_y_vel = SimpleRobotSteeringPlugin.DEFAULT_LINEAR_Y_VELOCITY
         self.target_angular_vel = SimpleRobotSteeringPlugin.DEFAULT_ANGULAR_VELOCITY
 
+        self.last_send_zero_velocity_time = None
         self.linear_x_vel = 0
         self.linear_y_vel = 0
         self.angular_vel = 0
@@ -290,7 +291,7 @@ class SimpleRobotSteeringPlugin(Plugin):
 
         # timer to consecutively send twist messages.
         self.update_parameter_timer = QTimer(self)
-        self.update_parameter_timer.timeout.connect(self.on_parameter_changed)
+        self.update_parameter_timer.timeout.connect(self.send_twist)
         self.update_parameter_timer.start(100)
 
         self.widget.w_button.toggled.connect(self.toggle_w_button)
@@ -362,24 +363,33 @@ class SimpleRobotSteeringPlugin(Plugin):
         else:
             self.angular_vel = 0 if self.angular_vel < 0 else self.angular_vel
 
-    def on_parameter_changed(self):
+    def send_twist(self):
         self.widget.linear_x_vel.setText("%.2f" % self.linear_x_vel)
         self.widget.linear_y_vel.setText("%.2f" % self.linear_y_vel)
         self.widget.angular_vel.setText("%.2f" % self.angular_vel)
-        self.send_twist(self.linear_x_vel, self.linear_y_vel, self.angular_vel)
 
-    def send_twist(self, x_linear, y_linear, z_angular):
         if self.publisher is None:
             return
-        twist = Twist()
-        twist.linear.x = x_linear
-        twist.linear.y = y_linear
-        twist.linear.z = 0
-        twist.angular.x = 0
-        twist.angular.y = 0
-        twist.angular.z = z_angular
 
-        self.publisher.publish(twist)
+        send_command = True
+        if self.linear_x_vel == 0 and self.linear_y_vel == 0 and self.angular_vel == 0:
+            if self.last_send_zero_velocity_time:
+                send_command = (rospy.Time.now() - self.last_send_zero_velocity_time) < rospy.Duration(0.5)
+            else:
+                self.last_send_zero_velocity_time = rospy.Time.now()
+        else:
+            self.last_send_zero_velocity_time = None
+
+        if send_command:
+            twist = Twist()
+            twist.linear.x = self.linear_x_vel
+            twist.linear.y = self.linear_y_vel
+            twist.linear.z = 0
+            twist.angular.x = 0
+            twist.angular.y = 0
+            twist.angular.z = self.angular_vel
+
+            self.publisher.publish(twist)
 
     def exec_dialog(self):
         self.dialog.target_linear_x_vel.setValue(self.target_linear_x_vel)
